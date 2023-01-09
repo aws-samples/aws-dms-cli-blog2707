@@ -1,0 +1,48 @@
+{
+    "rules": [
+        {
+            "rule-type": "selection",
+            "rule-id": "1",
+            "rule-name": "1",
+            "object-locator": {
+                "schema-name": "dbo",
+                "table-name": "%"
+            },
+            "rule-action": "include",
+            "filters": []
+        },
+        {
+            "rule-type": "selection",
+            "rule-id": "2",
+            "rule-name": "2",
+            "object-locator": {
+                "schema-name": "dbo",
+                "table-name": "DATABASECHANGELOG%"
+            },
+            "rule-action": "exclude",
+            "filters": []
+        },
+        {
+            "rule-type": "selection",
+            "rule-id": "3",
+            "rule-name": "3",
+            "object-locator": {
+                "schema-name": "dbo",
+                "table-name": "drop_%"
+            },
+            "rule-action": "exclude",
+            "filters": []
+        },
+        {
+            "rule-type": "selection",
+            "rule-id": "4",
+            "rule-name": "4",
+            "object-locator": {
+                "schema-name": "dbo",
+                "table-name": "heartbeat_dms_table"
+            },
+            "rule-action": "exclude",
+            "filters": []
+        } 
+    ]
+}
