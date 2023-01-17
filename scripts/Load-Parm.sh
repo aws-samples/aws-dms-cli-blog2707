@@ -1,4 +1,5 @@
 ### Read from Config file and set environment
+#Please make changes to fit into your environment
 if [[ -f "$CONFIGFILE" ]]; then
     PROFILE=`grep PROFILE $CONFIGFILE|awk '{print $2}'`
     REPLINSTANCEARN=`grep REPLINSTANCEARN $CONFIGFILE|awk '{print $2}'`
