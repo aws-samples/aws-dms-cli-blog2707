@@ -28,10 +28,6 @@ read -rp 'TARGET User Name: ' tuser
 read -rsp 'TARGET Password: ' tpassword
 echo
 
-suser=dmsuser
-spassword=Test1234
-tuser=dmsuser
-tpassword=Test1234
 
 SecretStringS={\"username\":\""$suser"\",\"password\":\""$spassword"\"}
 SecretStringT={\"username\":\""$tuser"\",\"password\":\""$tpassword"\"}
