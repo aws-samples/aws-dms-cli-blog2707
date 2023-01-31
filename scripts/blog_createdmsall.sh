@@ -88,7 +88,7 @@ chmod 700 "$EPCONSCRTPTNAME"
 #Get rid of empty line
 sed -i '' '/^$/d' "$DBLISTFILE"
 echo Start reading database information from "$DBLISTFILE" and creating Endpoints...
-exit 0
+
 grep -v RecordFormat "$DBLISTFILE"|while read -r EPTYPE DBENGINE DBNAME PORT HOSTNAME
 do
     #custom setting for each engine 
@@ -141,7 +141,7 @@ do
         echo  --server-name "$HOSTNAME" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
         echo  --port "$PORT" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
         echo  --tags file://"$TAGFILE" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
-        echo  --region "$REGION" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
+        echo  --region "$REGION"  |tee -a "$ENDPOINTSCRIPT"
         echo Running Source Endpoint creation script: "$ENDPOINTSCRIPT"
         ./"$ENDPOINTSCRIPT" |tee create_endpoint_"$SOURCENAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$SDBNAME1".out
 
@@ -174,7 +174,7 @@ do
         echo  --server-name "$HOSTNAME" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
         echo  --port "$PORT" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
         echo  --tags file://"$TAGFILE" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
-        echo  --region "$REGION" "$LINEBREAK" |tee -a "$ENDPOINTSCRIPT"
+        echo  --region "$REGION"  |tee -a "$ENDPOINTSCRIPT"
         echo Running Target Endpoint creation script: "$ENDPOINTSCRIPT"
         ./"$ENDPOINTSCRIPT" |tee create_endpoint_"$TARGETNAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$TDBNAME1".out
 
