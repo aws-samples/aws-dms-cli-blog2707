@@ -124,6 +124,7 @@ do
     #Replace _ with - so that it can be used in identifier
 	DBNAME1=$(echo "$DBNAME"|sed 's/_/-/')
     
+
     if [ "$EPTYPE" == "source" ] ; then
         SDBNAME1="$DBNAME1"
         
