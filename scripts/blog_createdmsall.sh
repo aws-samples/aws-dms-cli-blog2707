@@ -78,10 +78,16 @@ chmod 700 "$VTASKSCRTPTNAME"
 VTASKSCRTPTNAME1=create-DMS-validation-cdc-Task.sh
 true > "$VTASKSCRTPTNAME1"
 chmod 700 "$VTASKSCRTPTNAME1"
-EPCONSCRTPTNAME=create-DMS-ENDPOINT-Test-Connection.sh
+EPCONSCRTPTNAME=create-DMS-ENDPOINT-test-Connection.sh
 true > "$EPCONSCRTPTNAME"
 chmod 700 "$EPCONSCRTPTNAME"
+DMSDELETESCRIPT=delete-DMS-endpoint.sh
+true > "$DMSDELETESCRIPT"
+chmod 700 "$DMSDELETESCRIPT"
 
+
+DMSTASKID=dmstaskid.txt
+true > "$DMSTASKID"
 
 
 
@@ -145,10 +151,17 @@ do
         echo  --region "$REGION"  |tee -a "$ENDPOINTSCRIPT"
         echo Running Source Endpoint creation script: "$ENDPOINTSCRIPT"
         ./"$ENDPOINTSCRIPT" |tee create_endpoint_"$SOURCENAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$SDBNAME1".out
-
+        
         #Get Source Endpoint ARN
         SOURCEENDPOINTARN=$(grep EndpointArn create_endpoint_"$SOURCENAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$SDBNAME1".out|awk '{print $2}'|sed s/\"//g|sed s/,//)
-        
+        #Generate endpoint delete command
+        if [[ -n "$SOURCEENDPOINTARN" ]]; then
+            echo Generating Source Endpoint delete command in : "$DMSDELETESCRIPT"
+            echo aws dms delete-endpoint --profile "$PROFILE" "$LINEBREAK" |tee -a "$DMSDELETESCRIPT"
+            echo  --endpoint-arn "$SOURCEENDPOINTARN" "$LINEBREAK" |tee -a "$DMSDELETESCRIPT"
+            echo  --region "$REGION"  |tee -a "$DMSDELETESCRIPT"
+        fi
+
         #Generate Test connection script for Source Endpoint
         echo
         echo Generate Test connection script for Source Endpoint "$TARGETNAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$SDBNAME1": "$EPCONSCRTPTNAME"
@@ -179,8 +192,15 @@ do
         echo Running Target Endpoint creation script: "$ENDPOINTSCRIPT"
         ./"$ENDPOINTSCRIPT" |tee create_endpoint_"$TARGETNAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$TDBNAME1".out
 
-        #Get Endpoing ARN
+        #Get Endpoint ARN
         TARGETENDPOINTARN=$(grep EndpointArn create_endpoint_"$TARGETNAMEPREFIX"-"$EPTYPE"-"$DBENGINE"-"$TDBNAME1".out|awk '{print $2}'|sed s/\"//g|sed s/,//)
+        #Generate endpoint delete command
+        if [[ -n "$TARGETENDPOINTARN" ]]; then
+            echo Generating Target Endpoint delete command in : "$DMSDELETESCRIPT"
+            echo aws dms delete-endpoint --profile "$PROFILE" "$LINEBREAK" |tee -a "$DMSDELETESCRIPT"
+            echo  --endpoint-arn "$TARGETENDPOINTARN" "$LINEBREAK" |tee -a "$DMSDELETESCRIPT"
+            echo  --region "$REGION"  |tee -a "$DMSDELETESCRIPT"
+        fi
 
         #Generate Test connection script for Target Endpoint
         echo
@@ -195,7 +215,7 @@ do
         echo 
         echo Generating DMS Replication task script for "$SDBNAME1"-"$TDBNAME1"-"$DBENGINE"-"$MIGRATIONTYPE" to script: "$TASKSCRTPTNAME"
         echo aws dms create-replication-task --profile "$PROFILE" "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
-        echo "  " --replication-task-identifier "$SDBNAME1"-"$TDBNAME1"-"$DBENGINE"-$MIGRATIONTYPE "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
+        echo "  " --replication-task-identifier "$SDBNAME1"-"$TDBNAME1"-"$DBENGINE"-"$MIGRATIONTYPE" "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
         echo "  " --source-endpoint-arn "$SOURCEENDPOINTARN" "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
         echo "  " --target-endpoint-arn "$TARGETENDPOINTARN" "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
         echo "  " --replication-instance-arn "$REPLINSTANCEARN" "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
@@ -205,6 +225,10 @@ do
         echo "  " --replication-task-settings file://"$SETTINGFILE" "$LINEBREAK" |tee -a  "$TASKSCRTPTNAME"
         echo "  " --region "$REGION" |tee -a  "$TASKSCRTPTNAME"
         echo "  " |tee -a  "$TASKSCRTPTNAME"
+        echo echo "$SDBNAME1"-"$TDBNAME1"-"$DBENGINE"-"$MIGRATIONTYPE" ">>" "$DMSTASKID" >> "$TASKSCRTPTNAME"
+
+        #Save taskid for deletion
+        #echo "$SDBNAME1"-"$TDBNAME1"-"$DBENGINE"-"$MIGRATIONTYPE" >> "$DMSTASKID"
 
         #Generate Full-load Validation task script 
         echo 
@@ -220,6 +244,9 @@ do
         echo "  " --replication-task-settings file://tasksetting_validation.json "$LINEBREAK" |tee -a  "$VTASKSCRTPTNAME"
         echo "  " --region "$REGION" |tee -a  "$VTASKSCRTPTNAME"
         echo "  " |tee -a  "$VTASKSCRTPTNAME"
+        echo echo Validation-full-load-"$SDBNAME1"-"$TDBNAME1"-"$DBENGINE" ">>" "$DMSTASKID" >> "$VTASKSCRTPTNAME"
+        #Save taskid for deletion
+        #echo Validation-full-load-"$SDBNAME1"-"$TDBNAME1"-"$DBENGINE" >> "$DMSTASKID"
 
         #Generate cdc Validation task script 
         echo 
@@ -235,6 +262,9 @@ do
         echo "  " --replication-task-settings file://tasksetting_validation.json "$LINEBREAK" |tee -a  "$VTASKSCRTPTNAME1"
         echo "  " --region "$REGION"|tee -a  "$VTASKSCRTPTNAME1"
         echo "  " |tee -a  "$VTASKSCRTPTNAME1"
+        echo echo Validation-cdc-"$SDBNAME1"-"$TDBNAME1"-"$DBENGINE" ">>" "$DMSTASKID" >> "$VTASKSCRTPTNAME1"
+        #Save taskid for deletion
+        #echo Validation-cdc-"$SDBNAME1"-"$TDBNAME1"-"$DBENGINE" >> "$DMSTASKID"
     else 
         echo Endpoint Type is neither source nor target, quiting....
         echo 4
@@ -250,6 +280,9 @@ echo "  " --region  "$REGION"  \|egrep \'Status\|EndpointIdentifier\' >> "$EPCON
 
 
 
+
+
+
 if [ $RUNNOW = "YES" ] ; then
     echo Running Test Connection script: "$EPCONSCRTPTNAME"
     ./"$EPCONSCRTPTNAME" |tee "$EPCONSCRTPTNAME".out
@@ -262,10 +295,13 @@ if [ $RUNNOW = "YES" ] ; then
 else
     echo These scripts can run manually: 
     echo Script for Endpoints Test Connection is: "$EPCONSCRTPTNAME"
+    echo Script for Endpoints deleting script is: "$DMSDELETESCRIPT"
     echo Script for DMS Replication Task is: "$TASKSCRTPTNAME"
     echo Script for DMS Validation\(Full Load\) Task is: "$VTASKSCRTPTNAME"
     echo Script for DMS Validation\(CDC\) Task is: "$VTASKSCRTPTNAME1" 
 fi
+
+echo Script to generate operation task is blog_create_operation.sh
 
 
  

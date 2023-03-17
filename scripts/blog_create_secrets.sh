@@ -34,7 +34,9 @@ SecretStringT={\"username\":\""$tuser"\",\"password\":\""$tpassword"\"}
 
 
 SECRETARNS=$(aws secretsmanager --profile "$PROFILE" list-secrets --filters "Key=name,Values=DMSblog-Secret-SOURCE-${VERSION}" --region "$REGION"|grep arn|awk '{print $2}'|sed s/\"//g|sed s/,//)
-
+DELETESSECRET=delete-DMS-secret.sh
+true > "$DELETESSECRET"
+chmod 700 "$DELETESSECRET"
 #Create Source Secret if it does not exist
 if [[ -n $SECRETARNS ]]; then
     echo Secret name DMSblog-Secret-SOURCE-"$VERSION" exists, bypass creation..
@@ -48,6 +50,10 @@ else
     --region "$REGION" \
     |tee secrets_source.out
     SECRETARNS=$(grep arn secrets_source.out|awk '{print $2}'|sed s/\"//g|sed s/,//)
+    echo Generate delete script for Secret DMSblog-Secret-SOURCE-"$VERSION" in: "$DELETESSECRET"
+    echo aws secretsmanager delete-secret --profile "$PROFILE" "$LINEBREAK" |tee -a  "$DELETESSECRET"
+    echo "  " --secret-id  DMSblog-Secret-SOURCE-"$VERSION" --force-delete-without-recovery "$LINEBREAK"|tee -a  "$DELETESSECRET"
+    echo "  " --region "$REGION"  |tee -a "$DELETESSECRET"
 fi
 echo SOURCEARN: "$SECRETARNS" > DMSSECRET.INI
 
@@ -65,7 +71,12 @@ else
         --region "$REGION" \
         |tee secrets_target.out
     SECRETARNT=$(grep arn secrets_target.out|awk '{print $2}'|sed s/\"//g|sed s/,//)
+    echo Generate delete script for Secret DMSblog-Secret-TARGET-"$VERSION" in: "$DELETESSECRET"
+    echo aws secretsmanager delete-secret --profile "$PROFILE" "$LINEBREAK" |tee -a  "$DELETESSECRET"
+    echo "  " --secret-id  DMSblog-Secret-TARGET-"$VERSION" --force-delete-without-recovery "$LINEBREAK"|tee -a  "$DELETESSECRET"
+    echo "  " --region "$REGION"  |tee -a "$DELETESSECRET"
 fi
 echo TARGETARN: "$SECRETARNT" >> DMSSECRET.INI
 echo Secrets created successfully, DMSSECRET.INI generated. 
+echo rm -f DMSSECRET.INI >> "$DELETESSECRET"
  
